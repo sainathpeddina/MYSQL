@@ -1,0 +1,103 @@
+<pre>
+
+MYSQL
+Steps to Configure SQL with Selenium Java
+Add JDBC Driver to Your Project:
+To interact with the database, you need a JDBC (Java Database Connectivity) driver. 
+Download the driver for the type of database you're using (e.g., MySQL, PostgreSQL).
+If you're using Maven, add the dependency in pom.xml.
+
+For MySQL:
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.25</version>
+</dependency>
+
+Set up the Database Connection:
+Create a utility class to handle the database connection.
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+public class DatabaseUtility {
+
+    // Database connection parameters
+    private static final String URL = "jdbc:mysql://localhost:3306/your_database_name";
+    private static final String USER = "your_username";
+    private static final String PASSWORD = "your_password";
+    private static Connection connection;
+
+    // Method to establish the connection
+    public static Connection getConnection() throws SQLException {
+        if (connection == null || connection.isClosed()) {
+            connection = DriverManager.getConnection(URL, USER, PASSWORD);
+        }
+        return connection;
+    }
+
+    // Close the connection
+    public static void closeConnection() throws SQLException {
+        if (connection != null && !connection.isClosed()) {
+            connection.close();
+        }
+    }
+}
+
+Selenium Integration with SQL:
+Use the Connection object to interact with the database in your Selenium tests. 
+Below is an example that fetches test data from the database and uses it in a Selenium test.
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.By;
+import java.sql.*;
+
+public class SeleniumWithSQLExample {
+
+    public static void main(String[] args) {
+        // Set up WebDriver for Selenium
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+        WebDriver driver = new ChromeDriver();
+
+        // Database query to get a test URL
+        String urlFromDB = getTestURLFromDatabase();
+
+        // Use the fetched URL in Selenium
+        if (urlFromDB != null) {
+            driver.get(urlFromDB);  // Navigate to the URL from the database
+
+            // Sample Selenium interaction
+            driver.findElement(By.name("q")).sendKeys("Selenium with SQL Example");
+            driver.findElement(By.name("btnK")).click();
+        } else {
+            System.out.println("URL not found in the database.");
+        }
+
+        // Close the browser
+        driver.quit();
+    }
+
+    // Fetch URL from database (for example)
+    public static String getTestURLFromDatabase() {
+        String query = "SELECT test_url FROM test_urls LIMIT 1";  // Example query
+        String url = null;
+
+        try (Connection conn = DatabaseUtility.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            if (rs.next()) {
+                url = rs.getString("test_url");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return url;
+    }
+}
+
+</pre>
