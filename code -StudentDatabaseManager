@@ -1,0 +1,75 @@
+import java.sql.*;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+
+class DatabaseUtility {
+    private static final String URL = "jdbc:mysql://localhost:3306/testdb";
+    private static final String USER = "root"; // change as needed
+    private static final String PASSWORD = "password"; // change as needed
+
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USER, PASSWORD);
+    }
+}
+
+class StudentDatabaseManager {
+
+    public void createStudentTable() throws SQLException {
+        String query = "CREATE TABLE IF NOT EXISTS student ("
+                     + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                     + "name VARCHAR(50), "
+                     + "email VARCHAR(100), "
+                     + "marks INT)";
+        try (Connection conn = DatabaseUtility.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute(query);
+            System.out.println("Table created (if not exists).\n");
+        }
+    }
+
+    public void insertStudent(String name, String email, int marks) throws SQLException {
+        String query = "INSERT INTO student (name, email, marks) VALUES (?, ?, ?)";
+        try (Connection conn = DatabaseUtility.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, name);
+            pstmt.setString(2, email);
+            pstmt.setInt(3, marks);
+            pstmt.executeUpdate();
+            System.out.println("Student inserted: " + name);
+        }
+    }
+
+    public void readAllStudents() throws SQLException {
+        String query = "SELECT * FROM student";
+        try (Connection conn = DatabaseUtility.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            System.out.println("\nStudent Records:");
+            while (rs.next()) {
+                System.out.println(rs.getInt("id") + " | " +
+                                   rs.getString("name") + " | " +
+                                   rs.getString("email") + " | " +
+                                   rs.getInt("marks"));
+            }
+        }
+    }
+}
+
+public class SeleniumMySQLExample {
+    public static void main(String[] args) throws SQLException {
+        StudentDatabaseManager dbManager = new StudentDatabaseManager();
+        dbManager.createStudentTable();
+
+        dbManager.insertStudent("Ram", "ram@example.com", 85);
+        dbManager.insertStudent("Sita", "sita@example.com", 92);
+
+        dbManager.readAllStudents();
+
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+        WebDriver driver = new ChromeDriver();
+        driver.get("https://www.google.com");
+        System.out.println("Opened browser to search for student-related info.");
+        driver.quit();
+    }
+}
